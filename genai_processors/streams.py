@@ -134,14 +134,15 @@ async def concat(
       output_queues[idx].put_nowait(None)
 
   tasks = []
-  for idx, _ in enumerate(streams_list):
-    tasks.append(context.create_task(_stream_outputs(idx)))
-
   try:
+    for idx, _ in enumerate(streams_list):
+      tasks.append(context.create_task(_stream_outputs(idx)))
+
     for q in output_queues:
       while (part := await q.get()) is not None:
         q.task_done()
         yield part
+      q.task_done()
   finally:
     for t in tasks:
       t.cancel()
